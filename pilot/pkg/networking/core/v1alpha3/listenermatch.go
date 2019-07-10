@@ -3,9 +3,10 @@ package v1alpha3
 import (
 	xdsapi "github.com/envoyproxy/go-control-plane/envoy/api/v2"
 	networking "istio.io/api/networking/v1alpha3"
+	"istio.io/istio/pilot/pkg/model"
 )
 
-func findMatches(listenerMatch *networking.EnvoyFilter_ListenerMatch, listeners []*xdsapi.Listener) []*xdsapi.Listener {
+func findMatches(node *model.Proxy, listenerMatch *networking.EnvoyFilter_ListenerMatch, listeners []*xdsapi.Listener) []*xdsapi.Listener {
 	var matches []*xdsapi.Listener
 
 LISTENER_MATCH:

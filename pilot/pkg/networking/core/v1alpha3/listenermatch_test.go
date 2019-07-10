@@ -8,9 +8,14 @@ import (
 	"github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	"github.com/envoyproxy/go-control-plane/envoy/api/v2/listener"
 	networking "istio.io/api/networking/v1alpha3"
+	"istio.io/istio/pilot/pkg/model"
 )
 
 func TestFindMatches(t *testing.T) {
+	gateway := &model.Proxy{
+		Type:  model.Router,
+	}
+
 	seedListeners := []*xdsapi.Listener{
 		{
 			Address: core.Address{
@@ -106,12 +111,17 @@ func TestFindMatches(t *testing.T) {
 	}
 
 	testCases := []struct {
+		node *model.Proxy
 		name              string
 		matchConditions   *networking.EnvoyFilter_ListenerMatch
 		existingListeners []*xdsapi.Listener
 		result            []*xdsapi.Listener
 	}{
 		{
+			name: "empty match",
+		},
+		{
+			node: gateway,
 			name: "listeners matched by name",
 			matchConditions: &networking.EnvoyFilter_ListenerMatch{
 				Name: "nameListener",
@@ -131,6 +141,7 @@ func TestFindMatches(t *testing.T) {
 			},
 		},
 		{
+			node: gateway,
 			name: "listeners matched by port number",
 			matchConditions: &networking.EnvoyFilter_ListenerMatch{
 				PortNumber: 433,
@@ -152,6 +163,7 @@ func TestFindMatches(t *testing.T) {
 			},
 		},
 		{
+			node: gateway,
 			name: "listeners matched by port name",
 			matchConditions: &networking.EnvoyFilter_ListenerMatch{
 				PortName: "some-named-port",
@@ -173,6 +185,7 @@ func TestFindMatches(t *testing.T) {
 			},
 		},
 		{
+			node: gateway,
 			name: "listeners matched by filter chain sni",
 			matchConditions: &networking.EnvoyFilter_ListenerMatch{
 				FilterChain: &networking.EnvoyFilter_ListenerMatch_FilterChainMatch{
@@ -194,6 +207,7 @@ func TestFindMatches(t *testing.T) {
 			},
 		},
 		{
+			node: gateway,
 			name: "listeners matched by filter chain transport protocol",
 			matchConditions: &networking.EnvoyFilter_ListenerMatch{
 				FilterChain: &networking.EnvoyFilter_ListenerMatch_FilterChainMatch{
@@ -216,6 +230,7 @@ func TestFindMatches(t *testing.T) {
 			},
 		},
 		{
+			node: gateway,
 			name: "listeners matched by filter name in filter chain",
 			matchConditions: &networking.EnvoyFilter_ListenerMatch{
 				FilterChain: &networking.EnvoyFilter_ListenerMatch_FilterChainMatch{
@@ -246,7 +261,7 @@ func TestFindMatches(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		ret := findMatches(tc.matchConditions, tc.existingListeners)
+		ret := findMatches(tc.node, tc.matchConditions, tc.existingListeners)
 		if !reflect.DeepEqual(tc.result, ret) {
 			t.Errorf("test case:  %s; expecting %v but got %v", tc.name, tc.result, ret)
 		}
